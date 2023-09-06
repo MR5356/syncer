@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/MR5356/syncer/pkg/image/config"
 	"github.com/MR5356/syncer/pkg/image/types"
+	"github.com/MR5356/syncer/pkg/task"
 	"github.com/MR5356/syncer/pkg/utils/imageutil"
 	"github.com/containers/image/v5/manifest"
 	types2 "github.com/containers/image/v5/types"
@@ -41,8 +42,8 @@ func NewSyncTask(source, destination string, getAuthFunc func(repo string) *conf
 	}
 }
 
-func GenerateSyncTaskList(cfg *config.Config, ch chan struct{}) (*List, error) {
-	list := NewTaskList()
+func GenerateSyncTaskList(cfg *config.Config, ch chan struct{}) (*task.List, error) {
+	list := task.NewTaskList()
 	for source, dest := range cfg.Images {
 		if destList, ok := dest.([]any); ok {
 			if len(destList) == 0 {

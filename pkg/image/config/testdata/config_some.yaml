@@ -1,0 +1,4 @@
+images:
+  nginx:latest: test/nginx:latest
+proc: 8
+retries: 10

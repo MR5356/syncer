@@ -1,0 +1,15 @@
+{
+  "auth": {
+    "docker.io": {
+        "username": "user",
+        "password": "passwd",
+        "insecure": false
+    }
+  },
+  "images": {
+    "nginx:latest": "test/nginx:latest"
+  },
+  "arch": ["amd64", "arm64"],
+  "proc": 8,
+  "retries": 10
+}

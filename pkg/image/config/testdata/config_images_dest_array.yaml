@@ -1,0 +1,9 @@
+images:
+  nginx:latest:
+    - test/nginx:latest
+    - test2/nginx:latest
+arch:
+  - amd64
+  - arm64
+proc: 8
+retries: 10

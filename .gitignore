@@ -1,0 +1,4 @@
+.idea
+pkg/image/config/testdata/config_demo.yaml
+.run
+build

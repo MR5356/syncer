@@ -15,10 +15,22 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/sirupsen/logrus"
+	"github.com/skeema/knownhosts"
+	goSSH "golang.org/x/crypto/ssh"
 	"os"
+	"os/exec"
 	"os/user"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
+)
+
+var (
+	isGitUrl           = regexp.MustCompile(`^git@[-\w.:]+:[-\/\w.]+\.git$`)
+	isHttpUrl          = regexp.MustCompile(`^(https|http)://[-\w.:]+/[-\/\w.]+\.git$`)
+	isTokenizedHttpUrl = regexp.MustCompile(`^(https|http)://[a-zA-Z0-9_]+@[-\w.:]+/[-\/\w.]+\.git$`)
+	isBasicHttpUrl     = regexp.MustCompile(`^(https|http)://[a-zA-Z0-9]+:[\w]+@[-\w.:]+/[-\/\w.]+\.git$`)
 )
 
 type SyncTask struct {
@@ -100,9 +112,10 @@ func (t *SyncTask) Run() error {
 	dot = osfs.New(dirName)
 
 	repo, err := git.Clone(filesystem.NewStorage(dot, cache.NewObjectLRUDefault()), nil, &git.CloneOptions{
-		URL:    repoUrl,
-		Mirror: true,
-		Auth:   srcAuth,
+		URL:             repoUrl,
+		Mirror:          true,
+		Auth:            srcAuth,
+		InsecureSkipTLS: true,
 	})
 	if err != nil {
 		return err
@@ -116,9 +129,10 @@ func (t *SyncTask) Run() error {
 	t.destination = repoUrl
 
 	err = repo.Push(&git.PushOptions{
-		RemoteURL: repoUrl,
-		Auth:      destAuth,
-		Force:     true,
+		RemoteURL:       repoUrl,
+		Auth:            destAuth,
+		Force:           true,
+		InsecureSkipTLS: true,
 		RefSpecs: []gitConfig.RefSpec{
 			"+refs/heads/*:refs/heads/*",
 			"+refs/tags/*:refs/tags/*",
@@ -134,48 +148,139 @@ func (t *SyncTask) Run() error {
 }
 
 func getAuth(repo, privateKeyFile, privateKeyPassword string) (auth transport.AuthMethod, repoUrl string, err error) {
+	/**
+	支持以下形式：
+		1. https://github.com/MR5356/syncer.git
+		2. git@github.com:MR5356/syncer.git
+		3. https://username:password@github.com/MR5356/syncer.git
+		4. https://<token>@github.com/MR5356/syncer.git
+		5. https://oauth2:access_token@github.com/MR5356/syncer.git
+	*/
+
 	repoUrl = repo
-	if strings.HasPrefix(repo, "git") {
+	switch getUrlType(repo) {
+	case gitUrlType:
+		host, port := parseGitUrl(repo)
+
+		sshKeyScan(host, port)
+
 		if privateKeyFile == "" {
 			u, err := user.Current()
-			if err != nil {
-				return auth, repoUrl, err
+			if err == nil {
+				privateKeyFile = fmt.Sprintf("%s/.ssh/id_rsa", u.HomeDir)
 			}
-			privateKeyFile = fmt.Sprintf("%s/.ssh/id_rsa", u.HomeDir)
 		}
 		_, err = os.Stat(privateKeyFile)
 		if err != nil {
 			return auth, repoUrl, err
 		}
 		auth, err = ssh.NewPublicKeysFromFile("git", privateKeyFile, privateKeyPassword)
-	} else if strings.HasPrefix(repo, "http") {
-		if strings.Contains(repo, "@") {
-			fields := strings.Split(repo, "@")
-			userInfo := strings.Join(fields[0:len(fields)-1], "@")
-			repoInfo := fields[len(fields)-1]
-
-			if strings.HasPrefix(userInfo, "http://") {
-				userInfo = strings.ReplaceAll(userInfo, "http://", "")
-				repoUrl = fmt.Sprintf("%s%s", "http://", repoInfo)
-			} else if strings.HasPrefix(userInfo, "https://") {
-				userInfo = strings.ReplaceAll(userInfo, "https://", "")
-				repoUrl = fmt.Sprintf("%s%s", "https://", repoInfo)
-			}
-
-			fields = strings.Split(userInfo, ":")
-			username := fields[0]
-			password := strings.Join(fields[1:], ":")
-
-			auth = &http.BasicAuth{
-				Username: username,
-				Password: password,
-			}
-			logrus.Debugf("http auth: username: %s, password: %s, repoUrl: %s", username, password, repoUrl)
-		} else {
-			auth = nil
-		}
-	} else {
+		return auth, repoUrl, err
+	case httpUrlType:
 		auth = nil
+		return
+	case tokenizedHttpUrlType:
+		token := strings.ReplaceAll(strings.ReplaceAll(strings.Split(repo, "@")[0], "https://", ""), "http://", "")
+		logrus.Infof(token)
+		auth = &http.TokenAuth{
+			Token: token,
+		}
+		repoUrl = strings.ReplaceAll(repo, token+"@", "")
+		return
+	case basicHttpUrlType:
+		basicInfo := strings.ReplaceAll(strings.ReplaceAll(strings.Split(repo, "@")[0], "https://", ""), "http://", "")
+		fields := strings.Split(basicInfo, ":")
+		auth = &http.BasicAuth{
+			Username: fields[0],
+			Password: fields[1],
+		}
+		repoUrl = strings.ReplaceAll(repo, basicInfo+"@", "")
+		return
+	default:
+		return nil, "", fmt.Errorf("unsupported repo url: %s", repo)
+	}
+}
+
+type urlType int
+
+const (
+	unknownUrlType urlType = iota
+	gitUrlType
+	httpUrlType
+	tokenizedHttpUrlType
+	basicHttpUrlType
+)
+
+func getUrlType(url string) (t urlType) {
+	if isGitUrl.MatchString(url) {
+		t = gitUrlType
+	} else if isHttpUrl.MatchString(url) {
+		t = httpUrlType
+	} else if isTokenizedHttpUrl.MatchString(url) {
+		t = tokenizedHttpUrlType
+	} else if isBasicHttpUrl.MatchString(url) {
+		t = basicHttpUrlType
+	} else {
+		t = unknownUrlType
+	}
+	logrus.Debugf("getUrlType: %v", t)
+	return t
+}
+
+func parseGitUrl(url string) (host string, port int) {
+	fields := strings.Split(url, ":")
+	port = 22
+	if len(fields) == 2 {
+		host = strings.Split(fields[0], "@")[1]
+	} else if len(fields) == 3 {
+		host = strings.Split(fields[0], "@")[1]
+		port, _ = strconv.Atoi(fields[1])
 	}
 	return
+}
+
+func sshKeyScan(host string, port int) {
+	files, err := getDefaultKnownHostsFiles()
+	if err != nil {
+		logrus.Warnf("ssh-keyscan getDefaultKnownHostsFiles error: %s", err)
+		return
+	}
+	ks, err := knownhosts.New(files...)
+	if err != nil {
+		logrus.Warnf("ssh-keyscan knownhosts error: %s", err)
+		return
+	}
+	_, err = goSSH.Dial("tcp", fmt.Sprintf("%s:%d", host, port), &goSSH.ClientConfig{
+		HostKeyCallback:   ks.HostKeyCallback(),
+		HostKeyAlgorithms: ks.HostKeyAlgorithms(fmt.Sprintf("%s:%d", host, port)),
+	})
+	if err != nil && strings.Contains(err.Error(), "knownhosts") {
+		logrus.Warnf("%s, ssh-keyscan", err)
+		u, err := user.Current()
+		if err == nil {
+			cmd := exec.Command("sh", "-c", fmt.Sprintf("ssh-keyscan -p %d %s >> %s/.ssh/known_hosts", port, host, u.HomeDir))
+			logrus.Debugf(cmd.String())
+			out, err := cmd.CombinedOutput()
+			if err != nil {
+				logrus.Warnf("ssh-keyscan error: %s", err)
+			}
+			logrus.Debugf("ssh-keyscan logs: %s", string(out))
+		}
+	}
+}
+
+func getDefaultKnownHostsFiles() ([]string, error) {
+	files := filepath.SplitList(os.Getenv("SSH_KNOWN_HOSTS"))
+	if len(files) != 0 {
+		return files, nil
+	}
+
+	homeDirPath, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+
+	return []string{
+		filepath.Join(homeDirPath, "/.ssh/known_hosts"),
+	}, nil
 }

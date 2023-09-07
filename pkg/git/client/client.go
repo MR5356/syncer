@@ -46,6 +46,7 @@ func (c *Client) Run() error {
 	logrus.Infof("run sync task with %d processes", c.config.Proc)
 
 	for t := range c.taskList.Iterator() {
+		ch <- struct{}{}
 		wg.Add(1)
 		t := t
 		go func() {
@@ -67,6 +68,7 @@ func (c *Client) Run() error {
 				logrus.Infof("run sync task %s succeed", t.Name())
 				c.succeedTaskList.Add(t)
 			}
+			<-ch
 			wg.Done()
 		}()
 	}

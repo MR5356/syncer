@@ -101,6 +101,7 @@ func (t *SyncTask) Run() error {
 	var dot billy.Filesystem
 	dirName := fmt.Sprintf("/tmp/%s", filepath.Base(t.source))
 	defer func() {
+		logrus.Infof("clean %s", dirName)
 		_ = os.RemoveAll(dirName)
 	}()
 
@@ -111,6 +112,7 @@ func (t *SyncTask) Run() error {
 
 	dot = osfs.New(dirName)
 
+	logrus.Infof("clone %s to %s", t.source, dirName)
 	repo, err := git.Clone(filesystem.NewStorage(dot, cache.NewObjectLRUDefault()), nil, &git.CloneOptions{
 		URL:             repoUrl,
 		Mirror:          true,
@@ -128,6 +130,7 @@ func (t *SyncTask) Run() error {
 	}
 	t.destination = repoUrl
 
+	logrus.Infof("push to %s", t.destination)
 	err = repo.Push(&git.PushOptions{
 		RemoteURL:       repoUrl,
 		Auth:            destAuth,
@@ -174,6 +177,7 @@ func getAuth(repo, privateKeyFile, privateKeyPassword string) (auth transport.Au
 		if err != nil {
 			return auth, repoUrl, err
 		}
+		logrus.Debugf("privateKeyFile: %s, privateKeyPassword: %s", privateKeyFile, privateKeyPassword)
 		auth, err = ssh.NewPublicKeysFromFile("git", privateKeyFile, privateKeyPassword)
 		return auth, repoUrl, err
 	case httpUrlType:

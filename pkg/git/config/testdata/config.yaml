@@ -1,0 +1,6 @@
+proc: 5
+retries: 3
+#privateKeyFile: /etc/
+#privateKeyPassword: ""
+repos:
+  git@github.com:DockerContainerService/git-syncer.git: git@github.com:MR5356/syncer-1.git

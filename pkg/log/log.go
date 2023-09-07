@@ -1,7 +1,6 @@
 package log
 
 import (
-	"fmt"
 	nested "github.com/antonfisher/nested-logrus-formatter"
 	"github.com/sirupsen/logrus"
 	"runtime"
@@ -17,7 +16,8 @@ func init() {
 		TrimMessages:    true,
 		CallerFirst:     false,
 		CustomCallerFormatter: func(frame *runtime.Frame) string {
-			return fmt.Sprintf(" %s:%d", frame.Function, frame.Line)
+			return ""
+			//return fmt.Sprintf(" %s:%d", frame.Function, frame.Line)
 		},
 	})
 }

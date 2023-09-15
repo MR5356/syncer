@@ -1,5 +1,5 @@
 NAME = syncer
-BASE_VERSION = v1.0.0-release_build
+BASE_VERSION = build
 MODULE_NAME = github.com/MR5356/syncer
 
 VERSION ?= $(shell echo "${BASE_VERSION}.")$(shell git rev-parse --short HEAD)

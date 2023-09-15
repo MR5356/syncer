@@ -19,7 +19,7 @@ build: clean deps ## Build the project
 all: release ## Generate releases for all supported systems
 
 release: clean deps ## Generate releases for unix systems
-	for arch in $(architecture);\
+	bash -c for arch in $(architecture);\
 	do \
 		for os in $(OS);\
 		do \

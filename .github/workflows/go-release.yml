@@ -26,6 +26,7 @@ jobs:
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: true
         run: |
+          bash
           make release
           echo "##[set-env name=VERSION;]$(make version)"
 

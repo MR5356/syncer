@@ -23,18 +23,12 @@ jobs:
         run: make test
 
       - name: Build
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-        run: |
-          bash
-          make release
-          echo "##[set-env name=VERSION;]$(make version)"
+        run: make release
 
       - name: Release
         uses: softprops/action-gh-release@v0.1.15
         with:
           body: automatic release
-          tag_name: ${{ VERSION }}
           draft: true
           files: |
             ./build/syncer-*.tar.gz

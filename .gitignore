@@ -1,4 +1,4 @@
 .idea
-pkg/image/config/testdata/config_demo.yaml
+pkg/domain/image/config/testdata/config_demo.yaml
 .run
 build

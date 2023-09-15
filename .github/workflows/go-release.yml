@@ -25,13 +25,13 @@ jobs:
       - name: Build
         run: |
           make release
-          VERSION=`make version`
+          echo "##[set-env name=VERSION;]$(make version)"
 
       - name: Release
         uses: softprops/action-gh-release@v0.1.15
         with:
           body: automatic release
-          tag_name: ${{ VERSION }}
+          tag_name: ${ VERSION }
           draft: true
           files: |
             /build/syncer-darwin-amd64.tar.gz

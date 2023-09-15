@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 OS="linux darwin windows"
-ARCHITECTURES="amd64 arm64"
+ARCHITECTURES="amd64 arm64 arm 386"
 
 VERSION=$1
 NAME=$2

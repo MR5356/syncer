@@ -34,7 +34,7 @@ jobs:
         uses: softprops/action-gh-release@v0.1.15
         with:
           body: automatic release
-          tag_name: ${ VERSION }
+          tag_name: ${{ VERSION }}
           draft: true
           files: |
             ./build/syncer-*.tar.gz

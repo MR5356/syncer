@@ -37,9 +37,4 @@ jobs:
           tag_name: ${ VERSION }
           draft: true
           files: |
-            /build/syncer-darwin-amd64.tar.gz
-            /build/syncer-darwin-arm64.tar.gz
-            /build/syncer-linux-amd64.tar.gz
-            /build/syncer-linux-arm64.tar.gz
-            /build/syncer-windows-amd64.tar.gz
-            /build/syncer-windows-arm64.tar.gz
+            ./build/syncer-*.tar.gz

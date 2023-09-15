@@ -46,3 +46,6 @@ deps: ## Install dependencies using go get
 clean: ## Remove building artifacts
 	rm -rf build
 	rm -f $(NAME)
+
+version: ## Print version
+	@echo $(VERSION)

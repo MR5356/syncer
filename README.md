@@ -1,4 +1,5 @@
 # Syncer
+[![go-test](https://github.com/MR5356/syncer/workflows/Go%20Test/badge.svg?branch=main)](https://github.com/MR5356/syncer/actions?query=branch%3Amain)
 [![go-report](https://goreportcard.com/badge/github.com/MR5356/syncer)](https://goreportcard.com/report/github.com/MR5356/syncer)
 [![license](https://img.shields.io/github/license/MR5356/syncer)](https://www.apache.org/licenses/LICENSE-2.0.html)
 [![release](https://img.shields.io/github/v/release/MR5356/syncer)](https://github.com/MR5356/syncer/releases)

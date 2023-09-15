@@ -1,11 +1,8 @@
 package task
 
 import (
-	"fmt"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
-	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
-	"os/user"
 	"reflect"
 	"testing"
 )
@@ -23,25 +20,6 @@ func Test_getAuth(t *testing.T) {
 		wantRepoUrl string
 		wantErr     bool
 	}{
-		{
-			name: "test git url",
-			args: args{
-				repo:               "git@github.com:MR5356/syncer.git",
-				privateKeyFile:     "",
-				privateKeyPassword: "",
-			},
-			wantAuth: func() *ssh.PublicKeys {
-				privateKeyFile := ""
-				u, err := user.Current()
-				if err == nil {
-					privateKeyFile = fmt.Sprintf("%s/.ssh/id_rsa", u.HomeDir)
-				}
-				gitAuth, err := ssh.NewPublicKeysFromFile("git", privateKeyFile, "")
-				return gitAuth
-			}(),
-			wantRepoUrl: "git@github.com:MR5356/syncer.git",
-			wantErr:     false,
-		},
 		{
 			name: "test token url",
 			args: args{

@@ -1,5 +1,5 @@
 NAME = syncer
-BASE_VERSION = v1.0.0-release_build
+BASE_VERSION = build
 MODULE_NAME = github.com/MR5356/syncer
 
 VERSION ?= $(shell echo "${BASE_VERSION}.")$(shell git rev-parse --short HEAD)
@@ -19,23 +19,8 @@ build: clean deps ## Build the project
 all: release ## Generate releases for all supported systems
 
 release: clean deps ## Generate releases for unix systems
-	@for arch in $(architecture);\
-	do \
-		for os in $(OS);\
-		do \
-			echo "Building $$os-$$arch"; \
-			mkdir -p build/$$os-$$arch; \
-			if [ "$$os" == "windows" ]; then \
-				GOOS=$$os GOARCH=$$arch go build -ldflags "-s -w -X '$(MODULE_NAME)/pkg/version.Version=$(VERSION)'" -o build/$$os-$$arch/$(NAME).exe ./cmd/syncer; \
-			else \
-				GOOS=$$os GOARCH=$$arch go build -ldflags "-s -w -X '$(MODULE_NAME)/pkg/version.Version=$(VERSION)'" -o build/$$os-$$arch/$(NAME) ./cmd/syncer; \
-			fi; \
-			cd build; \
-			tar zcvf $(NAME)-$$os-$$arch.tar.gz $$os-$$arch; \
-			rm -rf $$os-$$arch; \
-			cd ..; \
-		done \
-	done
+	chmod +x hack/release.sh
+	bash -c "hack/release.sh $(VERSION) $(NAME) $(MODULE_NAME)"
 
 test: deps ## Execute tests
 	go test ./...
@@ -46,3 +31,6 @@ deps: ## Install dependencies using go get
 clean: ## Remove building artifacts
 	rm -rf build
 	rm -f $(NAME)
+
+version: ## Print version
+	@echo $(VERSION)

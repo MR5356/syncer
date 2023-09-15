@@ -23,6 +23,8 @@ jobs:
         run: make test
 
       - name: Build
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
         run: |
           make release
           echo "##[set-env name=VERSION;]$(make version)"

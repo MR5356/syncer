@@ -19,23 +19,8 @@ build: clean deps ## Build the project
 all: release ## Generate releases for all supported systems
 
 release: clean deps ## Generate releases for unix systems
-	bash -c for arch in $(architecture);\
-	do \
-		for os in $(OS);\
-		do \
-			echo "Building $$os-$$arch"; \
-			mkdir -p build/$$os-$$arch; \
-			if [ "$$os" == "windows" ]; then \
-				GOOS=$$os GOARCH=$$arch go build -ldflags "-s -w -X '$(MODULE_NAME)/pkg/version.Version=$(VERSION)'" -o build/$$os-$$arch/$(NAME).exe ./cmd/syncer; \
-			else \
-				GOOS=$$os GOARCH=$$arch go build -ldflags "-s -w -X '$(MODULE_NAME)/pkg/version.Version=$(VERSION)'" -o build/$$os-$$arch/$(NAME) ./cmd/syncer; \
-			fi; \
-			cd build; \
-			tar zcvf $(NAME)-$$os-$$arch.tar.gz $$os-$$arch; \
-			rm -rf $$os-$$arch; \
-			cd ..; \
-		done \
-	done
+	chmod +x hack/release.sh
+	bash -c "hack/release.sh $(VERSION) $(NAME) $(MODULE_NAME)"
 
 test: deps ## Execute tests
 	go test ./...

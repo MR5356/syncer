@@ -3,7 +3,7 @@ package task
 import (
 	"errors"
 	"fmt"
-	"github.com/MR5356/syncer/pkg/git/config"
+	"github.com/MR5356/syncer/pkg/domain/git/config"
 	"github.com/MR5356/syncer/pkg/task"
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/osfs"

@@ -3,8 +3,8 @@ package task
 import (
 	"errors"
 	"fmt"
-	"github.com/MR5356/syncer/pkg/image/config"
-	"github.com/MR5356/syncer/pkg/image/types"
+	"github.com/MR5356/syncer/pkg/domain/image/config"
+	types3 "github.com/MR5356/syncer/pkg/domain/image/types"
 	"github.com/MR5356/syncer/pkg/task"
 	"github.com/MR5356/syncer/pkg/utils/imageutil"
 	"github.com/containers/image/v5/manifest"
@@ -26,8 +26,8 @@ type SyncTask struct {
 }
 
 type Sync struct {
-	source      *types.ImageSource
-	destination *types.ImageDestination
+	source      *types3.ImageSource
+	destination *types3.ImageDestination
 }
 
 func NewSyncTask(source, destination string, getAuthFunc func(repo string) *config.Auth, ch chan struct{}) *SyncTask {
@@ -95,7 +95,7 @@ func (t *SyncTask) Run() error {
 	if srcImageInfo.TagOrDigest != "" {
 		logrus.Debugf("source image info tag or digest: %s", srcImageInfo.TagOrDigest)
 		srcAuth := t.getAuthFunc(srcImageInfo.Registry)
-		srcRef, err := types.NewImageSource(srcImageInfo.Registry, srcImageInfo.GetRepo(), srcImageInfo.TagOrDigest, srcAuth.Username, srcAuth.Password, srcAuth.Insecure)
+		srcRef, err := types3.NewImageSource(srcImageInfo.Registry, srcImageInfo.GetRepo(), srcImageInfo.TagOrDigest, srcAuth.Username, srcAuth.Password, srcAuth.Insecure)
 		if err != nil {
 			return err
 		}
@@ -104,7 +104,7 @@ func (t *SyncTask) Run() error {
 		if destImageInfo.TagOrDigest == "" {
 			destImageInfo.TagOrDigest = srcImageInfo.TagOrDigest
 		}
-		destRef, err := types.NewImageDestination(destImageInfo.Registry, destImageInfo.GetRepo(), destImageInfo.TagOrDigest, destAuth.Username, destAuth.Password, destAuth.Insecure)
+		destRef, err := types3.NewImageDestination(destImageInfo.Registry, destImageInfo.GetRepo(), destImageInfo.TagOrDigest, destAuth.Username, destAuth.Password, destAuth.Insecure)
 		if err != nil {
 			return err
 		}
@@ -118,7 +118,7 @@ func (t *SyncTask) Run() error {
 		srcAuth := t.getAuthFunc(srcImageInfo.Registry)
 		destAuth := t.getAuthFunc(destImageInfo.Registry)
 
-		src, err := types.NewImageSource(srcImageInfo.Registry, srcImageInfo.GetRepo(), srcImageInfo.TagOrDigest, srcAuth.Username, srcAuth.Password, srcAuth.Insecure)
+		src, err := types3.NewImageSource(srcImageInfo.Registry, srcImageInfo.GetRepo(), srcImageInfo.TagOrDigest, srcAuth.Username, srcAuth.Password, srcAuth.Insecure)
 		if err != nil {
 			return err
 		}
@@ -138,12 +138,12 @@ func (t *SyncTask) Run() error {
 				defer func() {
 					<-t.ch
 				}()
-				srcRef, err := types.NewImageSource(srcImageInfo.Registry, srcImageInfo.GetRepo(), tag, srcAuth.Username, srcAuth.Password, srcAuth.Insecure)
+				srcRef, err := types3.NewImageSource(srcImageInfo.Registry, srcImageInfo.GetRepo(), tag, srcAuth.Username, srcAuth.Password, srcAuth.Insecure)
 				if err != nil {
 					return err
 				}
 
-				destRef, err := types.NewImageDestination(destImageInfo.Registry, destImageInfo.GetRepo(), tag, destAuth.Username, destAuth.Password, destAuth.Insecure)
+				destRef, err := types3.NewImageDestination(destImageInfo.Registry, destImageInfo.GetRepo(), tag, destAuth.Username, destAuth.Password, destAuth.Insecure)
 				if err != nil {
 					return err
 				}
@@ -242,7 +242,7 @@ func (t *SyncTask) Run() error {
 	return nil
 }
 
-func transBlob(source *types.ImageSource, destination *types.ImageDestination, info types2.BlobInfo) error {
+func transBlob(source *types3.ImageSource, destination *types3.ImageDestination, info types2.BlobInfo) error {
 	logrus.Infof("trans blob: %s", info.Digest)
 	exist, err := destination.CheckBlobExist(info)
 	if err != nil {
@@ -271,7 +271,7 @@ type ManifestInfo struct {
 	Bytes []byte
 }
 
-func GetManifests(manifestBytes []byte, manifestType string, source *types.ImageSource, parent *manifest.Schema2List) (interface{}, []byte, []*ManifestInfo, error) {
+func GetManifests(manifestBytes []byte, manifestType string, source *types3.ImageSource, parent *manifest.Schema2List) (interface{}, []byte, []*ManifestInfo, error) {
 	switch manifestType {
 	case manifest.DockerV2Schema2MediaType:
 		manifestObj, err := manifest.Schema2FromManifest(manifestBytes)

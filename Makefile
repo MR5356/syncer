@@ -4,9 +4,6 @@ MODULE_NAME = github.com/MR5356/syncer
 
 VERSION ?= $(shell echo "${BASE_VERSION}.")$(shell git rev-parse --short HEAD)
 
-OS = linux darwin windows
-architecture = amd64 arm64
-
 .DEFAULT_GOAL := help
 
 .PHONY: help
@@ -31,6 +28,3 @@ deps: ## Install dependencies using go get
 clean: ## Remove building artifacts
 	rm -rf build
 	rm -f $(NAME)
-
-version: ## Print version
-	@echo $(VERSION)

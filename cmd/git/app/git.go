@@ -1,8 +1,8 @@
 package app
 
 import (
-	"github.com/MR5356/syncer/pkg/git/client"
-	"github.com/MR5356/syncer/pkg/git/config"
+	"github.com/MR5356/syncer/pkg/domain/git/client"
+	"github.com/MR5356/syncer/pkg/domain/git/config"
 	"github.com/MR5356/syncer/pkg/utils/structutil"
 	"github.com/MR5356/syncer/pkg/version"
 	"github.com/sirupsen/logrus"

@@ -12,6 +12,12 @@
 * Look forward to more features with anticipation
 
 ## Install
+### install with homebrew
+```shell
+brew install mr5356/brew/syncer
+```
+
+### install with binary
 you can download the latest binary release [here](https://github.com/MR5356/syncer/releases)
 
 ### install form source
